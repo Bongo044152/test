@@ -1,3 +1,6 @@
+# sudo modprobe sch_netem <- install tc : netem module
+# sudo apt install iproute2
+
 from scapy.all import Ether, ARP, srp, send
 import argparse
 import time
@@ -112,8 +115,21 @@ def add_network_delay_for_ip(interface, source_ip, delay="15ms"):
 
         # Step 2: Apply delay to marked packets using tc
         print(f"[INFO] Adding delay {delay} for packets from IP {source_ip}...")
+        # Create a root qdisc of type 'prio' to manage priority of traffic
         subprocess.run(
-            ["sudo", "tc", "qdisc", "add", "dev", interface, "parent", "1:1", "handle", "1:1", "netem", "delay", delay],
+            ["sudo", "tc", "qdisc", "add", "dev", interface, "root", "handle", "1:", "prio"],
+            check=True
+        )
+
+        # Apply the filter for packets with the specific mark (1)
+        subprocess.run(
+            ["sudo", "tc", "filter", "add", "dev", interface, "parent", "1:", "protocol", "ip", "handle", "1", "fw", "flowid", "1:1"],
+            check=True
+        )
+
+        # Apply network delay to marked packets
+        subprocess.run(
+            ["sudo", "tc", "qdisc", "add", "dev", interface, "parent", "1:1", "handle", "10:", "netem", "delay", delay],
             check=True
         )
         
@@ -123,25 +139,27 @@ def add_network_delay_for_ip(interface, source_ip, delay="15ms"):
     except PermissionError:
         print("[ERROR] Permission denied. Try running the script as root (sudo).")
 
-def remove_network_delay_for_ip(interface):
+def remove_network_delay_for_ip(interface, source_ip):
     """
     Removes the network delay and the iptables rule for the specific IP address.
     """
     try:
         # Remove the delay using tc
+        print(f"[INFO] Removing network delay from interface {interface}...")
         subprocess.run(
-            ["sudo", "tc", "qdisc", "del", "dev", interface, "root", "netem"],
+            ["sudo", "tc", "qdisc", "del", "dev", interface, "root"],
             check=True
         )
         print(f"[SUCCESS] Removed network delay from interface {interface}.")
 
-        # Remove the iptables rule
+        # Remove the iptables rule for the specific source IP
+        print(f"[INFO] Removing iptables rule for source IP {source_ip}...")
         subprocess.run(
-            ["sudo", "iptables", "-D", "INPUT", "-s", "source_ip", "-j", "MARK", "--set-mark", "1"],
+            ["sudo", "iptables", "-D", "INPUT", "-s", source_ip, "-j", "MARK", "--set-mark", "1"],
             check=True
         )
-        print(f"[SUCCESS] Removed iptables rule for source IP.")
-
+        print(f"[SUCCESS] Removed iptables rule for source IP {source_ip}.")
+    
     except subprocess.CalledProcessError as e:
         print(f"[ERROR] Failed to remove network delay: {e}")
     except PermissionError:
