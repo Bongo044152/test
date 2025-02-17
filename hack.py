@@ -185,7 +185,8 @@ if __name__ == "__main__":
 
 
     # enable ip forwarding
-    enable_ip_route()
+    _disable_linux_iproute()
+    # enable_ip_route()
     # Add delay for packets from a specific IP address
     add_network_delay_for_ip(network_interface, target_ip, delay=delay_time)
     try:
