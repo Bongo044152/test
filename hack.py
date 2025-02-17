@@ -113,26 +113,28 @@ def add_network_delay_for_ip(interface, source_ip, delay="15ms"):
             check=True
         )
 
-        # Step 2: Apply delay to marked packets using tc
-        print(f"[INFO] Adding delay {delay} for packets from IP {source_ip}...")
-        # Create a root qdisc of type 'prio' to manage priority of traffic
+        # Step 2: Create a root qdisc with a priority scheduler (prio) for traffic management
+        print(f"[INFO] Adding prio qdisc to interface {interface}...")
         subprocess.run(
             ["sudo", "tc", "qdisc", "add", "dev", interface, "root", "handle", "1:", "prio"],
             check=True
         )
 
-        # Apply the filter for packets with the specific mark (1)
+        # Step 3: Apply the filter for packets marked with "1" (from iptables)
+        print(f"[INFO] Adding filter for packets marked with '1' from IP {source_ip}...")
         subprocess.run(
-            ["sudo", "tc", "filter", "add", "dev", interface, "parent", "1:", "protocol", "ip", "handle", "1", "fw", "flowid", "1:1"],
+            ["sudo", "tc", "filter", "add", "dev", interface, "parent", "1:", "protocol", "ip", 
+             "handle", "1", "fw", "flowid", "1:1"],
             check=True
         )
 
-        # Apply network delay to marked packets
+        # Step 4: Add the network delay to the marked packets (flowid 1:1)
+        print(f"[INFO] Adding delay {delay} for packets from IP {source_ip} on interface {interface}...")
         subprocess.run(
             ["sudo", "tc", "qdisc", "add", "dev", interface, "parent", "1:1", "handle", "10:", "netem", "delay", delay],
             check=True
         )
-        
+
         print(f"[SUCCESS] Applied {delay} network delay for IP {source_ip} on interface {interface}.")
     except subprocess.CalledProcessError as e:
         print(f"[ERROR] Failed to add network delay: {e}")
