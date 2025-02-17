@@ -169,11 +169,11 @@ def remove_network_delay_for_ip(interface, source_ip):
 
 if __name__ == "__main__":
     # Customize the delay as needed -> delay when forwarding packet
-    delay_time = "120ms"
+    delay_time = "60ms"
     # indicate specific interface
     network_interface = "ens2"
     # victim ip address
-    target_ip = "192.168.10.25"
+    target_ip = "192.168.10.2"
     # victim mac address
     target_mac = get_mac(target_ip)
     # gateway ip address
