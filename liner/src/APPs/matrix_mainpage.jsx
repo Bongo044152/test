@@ -35,6 +35,7 @@ function NumberInput() {
 
 function GetMatrix({ rows, setRows, cols, setCols }) {
     const add_row = () => {
+        if(rows > 5) return;
         setRows(rows + 1);
     };
 
@@ -45,6 +46,7 @@ function GetMatrix({ rows, setRows, cols, setCols }) {
     };
 
     const add_col = () => {
+        if(cols > 5) return;
         setCols(cols + 1);
     };
 

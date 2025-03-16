@@ -1,0 +1,85 @@
+.introSection {
+    background-color: #2a2a2a;
+    /* 深灰色背景，降低對比 */
+    color: #e0e0e0;
+    /* 柔和的白色文字 */
+    padding: 40px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    font-family: 'Inter', sans-serif;
+    /* 使用現代化字體 */
+    line-height: 1.8;
+    /* 增加行距，提高可讀性 */
+    text-align: left;
+}
+
+.introTitle {
+    font-size: 2.4em;
+    font-weight: 700;
+    color: #f5f5f5;
+    /* 較柔和的白色 */
+    margin-bottom: 15px;
+}
+
+.introSubtitle {
+    margin-top: 25px;
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #cccccc;
+    /* 淡灰色，與背景更協調 */
+    margin-bottom: 15px;
+}
+
+.introContent {
+    font-size: 1.2em;
+    color: #d4d4d4;
+    max-width: 800px;
+    font-weight: 600;
+}
+
+.introList {
+    margin-top: 20px;
+    padding-left: 20px;
+}
+
+.introList li {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.introLink {
+    color: #56b6c2;
+    /* 柔和的藍綠色 */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.introLink:hover {
+    text-decoration: underline;
+}
+
+a {
+    font-weight: 800;
+}
+
+li {
+    list-style: none;
+    /* 去除預設的項目符號 */
+    position: relative;
+    padding-left: 20px;
+    /* 給予縮排 */
+}
+
+li::before {
+    content: '•';
+    /* 顯示圓點 */
+    color: white;
+    /* 改變圓點顏色 */
+    position: absolute;
+    left: 0;
+    /* 調整圓點位置 */
+    top: 50%;
+    transform: translateY(-50%);
+    /* 垂直居中 */
+}
