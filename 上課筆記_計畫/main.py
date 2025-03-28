@@ -8,6 +8,8 @@ import multiprocessing
 from queue import Empty
 from io import BytesIO
 
+import os
+
 t_recode = 60 * 10
 
 class MultithreadingAssistant:
@@ -37,7 +39,7 @@ class MultithreadingAssistant:
         self.queue.put(None)  # Signal to exit the loop
 
         # Give the process some time to terminate
-        self.process.join(timeout=60)
+        self.process.join(timeout=60 * 7) # 最多等待 7 分鐘，否則強制終止進程
 
         # If it's still alive, terminate it
         if self.process.is_alive():
@@ -54,7 +56,7 @@ class MultithreadingAssistant:
 
         while True:
             try:
-                iostream = self.queue.get(timeout=10)
+                iostream = self.queue.get(timeout=60 * 1)
                 if iostream is None:
                     break  # Exit the loop
 
@@ -70,10 +72,19 @@ class MultithreadingAssistant:
 
                     Logger.info(f"STT的結果 ( 錄音的內容 ) :\n{with_tag}")
                     new_note = my_ai.req(with_tag)
-                    Logger.info(f"AI 生成的筆記: {my_ai.note}")
-                    Logger.info(f"AI 的記憶: {my_ai.ai_memo}")
+                    Logger.info(f"AI 生成的筆記:\n{my_ai.note}")
+                    Logger.info(f"AI 的記憶:\n{my_ai.ai_memo}")
                 except Exception as e:
                     Logger.error(f"Error processing audio: {str(e)}")
+                    def get_proper_path():
+                        current_path = "./temp_recoad"
+                        i = 0
+                        save = f"{current_path}{i}.wav"
+                        while os.path.exists(os.path.abspath(save)):
+                            i += 1
+                            save = f"{current_path}{i}.wav"
+                        return save
+                    AudioHelper.save_ioStream(iostream, get_proper_path())
             except Empty:
                 with self.end.get_lock():
                     if self.end.value:

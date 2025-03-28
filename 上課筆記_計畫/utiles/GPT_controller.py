@@ -1,9 +1,40 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+import sys, os
+sys.path.append(os.path.abspath("."))
 from utiles.config import get_system_prompt
-import os
 
 load_dotenv()
+
+encode = 'utf-8'
+class Infomation_recode_helper():
+    
+    @staticmethod
+    def write_end(data, path):
+        """將資料寫在文件的最末端"""
+        with open(path, "a", encoding=encode) as f:
+            f.write(data)
+    
+    @staticmethod
+    def clean(path):
+        """清除目標文件，如果該文件不存在，則 Error"""
+        if not os.path.exists(os.path.abspath(path)):
+            raise FileNotFoundError("該文件不存在")
+        with open(path, "w", encoding=encode) as f:
+            f.write("")
+    
+    @staticmethod
+    def read(path) -> str:
+        """讀取資料"""
+        if not os.path.exists(os.path.abspath(path)):
+            with open(path, "w", encoding=encode) as f:
+                f.write("")
+
+
+        with open(path, "r", encoding=encode) as f:
+            txt = f.read()
+        return txt
+
 
 class GPT_controller:
 
@@ -12,9 +43,27 @@ class GPT_controller:
         self.ai_memo = "" # 更新
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+        # 用戶指示
+        self.user_instruct = "" # 用戶當前指示/需求，每次跌代清空
+        self.bac = "" # 用戶提示當前情境，例如教授正在閱讀或者探討一些議題，方便 ai 掌握重點，每次跌代清空
+
     def req(self, audio_text: str):
 
-        system_prmopt = get_system_prompt(self.ai_memo)
+        # 讀取記憶
+        note_path = "./current_note.txt"
+        user_instruct_path = "./user_instruct.txt"
+        bac_path = "./bac.txt"
+
+        # 讀取必要資訊
+        self.note = Infomation_recode_helper.read(note_path)
+        self.user_instruct = Infomation_recode_helper.read(user_instruct_path)
+        self.bac = Infomation_recode_helper.read(bac_path)
+        # 清空
+        Infomation_recode_helper.clean(note_path)
+        Infomation_recode_helper.clean(user_instruct_path)
+        Infomation_recode_helper.clean(bac_path)
+
+        system_prmopt = get_system_prompt(self.ai_memo, self.user_instruct, self.bac)
 
         # OpenAI API 請求內容
         messages = [
@@ -56,9 +105,15 @@ class GPT_controller:
         self.note, self.ai_memo = get_info(updated_notes)
 
         if len(self.note) > 2500:
-            with open("output.md", "a", encoding="uft8") as f:
+            with open("output.md", "a", encoding=encode) as f:
                 f.write(self.note)
             self.note = ''
+
+        # 寫入
+        Infomation_recode_helper.write_end(self.note, note_path)
+
+        # 清空狀態
+        self.user_instruct = self.bac = ""
 
         # 輸出更新後的筆記
         return self.note
@@ -70,5 +125,7 @@ if __name__ == '__main__':
     iostream = AudioHelper.load_to_io(filepath)
     res = STT_controler.get_text(iostream)
     a, b = STT_controler.wash_data(res)
+    gpt = GPT_controller()
     print(a)
     print(b)
+    print(gpt.req(a))
